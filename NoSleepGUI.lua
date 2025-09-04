@@ -1,14 +1,16 @@
 -- =========================
--- No Sleep GUI for Steal A Brainrot (Simplified & Movable)
+-- No Sleep GUI for Steal A Brainrot (Rainbow + Movable + Inf Jump)
 -- =========================
 
 local MAX_SPEED = 100
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local desiredSpeed = 16
 local speedEnabled = true
 local playerESPEnabled = true
+local infJumpEnabled = false
 
 -- Folder for ESP GUI
 local espFolder = Instance.new("Folder")
@@ -23,12 +25,22 @@ gui.Name = "NoSleepGUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 180)
+frame.Size = UDim2.new(0, 300, 0, 220)
 frame.Position = UDim2.new(0, 20, 0, 20)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.Active = true
-frame.Draggable = true -- Make GUI movable
+frame.Draggable = true -- Movable
 frame.Parent = gui
+
+-- Rainbow GUI effect
+spawn(function()
+    local hue = 0
+    while true do
+        frame.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+        hue = hue + 0.005
+        if hue > 1 then hue = 0 end
+        wait(0.03)
+    end
+end)
 
 -- Title
 local title = Instance.new("TextLabel")
@@ -51,23 +63,20 @@ closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 closeBtn.Font = Enum.Font.SourceSansBold
 closeBtn.TextSize = 18
 closeBtn.Parent = frame
-
--- Toggle visibility on close
 closeBtn.MouseButton1Click:Connect(function()
     gui.Enabled = false
 end)
 
 -- Reopen button
 local reopenBtn = Instance.new("TextButton")
-reopenBtn.Size = UDim2.new(0, 120, 0, 30)
-reopenBtn.Position = UDim2.new(0, 20, 0, 210)
+reopenBtn.Size = UDim2.new(0, 140, 0, 30)
+reopenBtn.Position = UDim2.new(0, 20, 0, 250)
 reopenBtn.Text = "Open No Sleep GUI"
 reopenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 reopenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 reopenBtn.Font = Enum.Font.SourceSansBold
 reopenBtn.TextSize = 16
 reopenBtn.Parent = gui
-
 reopenBtn.MouseButton1Click:Connect(function()
     gui.Enabled = true
 end)
@@ -92,7 +101,7 @@ speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 speedLabel.Text = "Speed: "..desiredSpeed
 speedLabel.Parent = frame
 
--- Feature Toggle
+-- Player ESP Toggle
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(1, -20, 0, 30)
 toggleBtn.Position = UDim2.new(0, 10, 0, 90)
@@ -102,10 +111,24 @@ toggleBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextSize = 16
 toggleBtn.Parent = frame
-
 toggleBtn.MouseButton1Click:Connect(function()
     playerESPEnabled = not playerESPEnabled
     toggleBtn.Text = "Player ESP: "..(playerESPEnabled and "ON" or "OFF")
+end)
+
+-- Infinite Jump Toggle
+local infJumpBtn = Instance.new("TextButton")
+infJumpBtn.Size = UDim2.new(1, -20, 0, 30)
+infJumpBtn.Position = UDim2.new(0, 10, 0, 130)
+infJumpBtn.Text = "Infinite Jump: OFF"
+infJumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+infJumpBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+infJumpBtn.Font = Enum.Font.SourceSansBold
+infJumpBtn.TextSize = 16
+infJumpBtn.Parent = frame
+infJumpBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    infJumpBtn.Text = "Infinite Jump: "..(infJumpEnabled and "ON" or "OFF")
 end)
 
 -- Slider input
@@ -139,6 +162,18 @@ spawn(function()
             end
         end
         wait(0.03)
+    end
+end)
+
+-- =========================
+-- INFINITE JUMP
+-- =========================
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local char = player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
     end
 end)
 
@@ -182,9 +217,4 @@ end
 -- ESP for new players
 game.Players.PlayerAdded:Connect(function(p)
     createESPForPlayer(p)
-end)
-
--- Reapply speed after respawn
-player.CharacterAdded:Connect(function()
-    wait(1)
 end)
