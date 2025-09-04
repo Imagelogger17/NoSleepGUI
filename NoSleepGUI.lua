@@ -1,6 +1,5 @@
 -- =========================
--- No Sleep GUI for Steal A Brainrot
--- Features: Speed slider, Player ESP, Brainrot ESP, Base Timer ESP
+-- No Sleep GUI for Steal A Brainrot (Updated ESP)
 -- =========================
 
 local MAX_SPEED = 100
@@ -156,11 +155,10 @@ local function createESPForPlayer(targetPlayer)
 end
 
 -- =========================
--- BRAINROT & BASE ESP
+-- BRAINROT ESP
 -- =========================
-local function highlightObjects()
-    for _, obj in pairs(workspace:GetChildren()) do
-        -- Brainrot ESP
+local function highlightBrainrots()
+    for _, obj in pairs(workspace:GetDescendants()) do
         if brainrotESPEnabled and obj.Name:lower():find("brainrot") then
             if not obj:FindFirstChild("Highlight") then
                 local highlight = Instance.new("Highlight")
@@ -169,11 +167,17 @@ local function highlightObjects()
                 highlight.Parent = obj
             end
         end
+    end
+end
 
-        -- Base Timer ESP
-        if baseTimerESPEnabled and obj:FindFirstChildWhichIsA("NumberValue") then
-            for _, child in pairs(obj:GetChildren()) do
-                if child:IsA("NumberValue") and child.Name:lower():find("timer") then
+-- =========================
+-- BASE TIMER ESP
+-- =========================
+local function highlightBaseTimers()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        for _, child in pairs(obj:GetChildren()) do
+            if baseTimerESPEnabled and (child:IsA("NumberValue") or child:IsA("IntValue") or child:IsA("StringValue")) then
+                if child.Name:lower():find("timer") then
                     if not child:FindFirstChild("BillboardTimer") then
                         local billboard = Instance.new("BillboardGui")
                         billboard.Size = UDim2.new(0, 100, 0, 50)
@@ -223,7 +227,8 @@ end)
 
 -- Highlight brainrots & bases every frame
 RunService.RenderStepped:Connect(function()
-    highlightObjects()
+    highlightBrainrots()
+    highlightBaseTimers()
 end)
 
 -- Reapply speed after respawn
