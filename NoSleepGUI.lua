@@ -1,5 +1,6 @@
 -- =========================
--- No Sleep GUI for Steal A Brainrot (Rainbow + Movable + Inf Jump + Max Speed 48)
+-- No Sleep GUI for Steal A Brainrot
+-- Features: Rainbow GUI, Movable, Close/Reopen, Speed (max 48), Safe Inf Jump, Player ESP, Persistent GUI
 -- =========================
 
 local MAX_SPEED = 48
@@ -12,7 +13,7 @@ local speedEnabled = true
 local playerESPEnabled = true
 local infJumpEnabled = false
 
--- Folder for ESP GUI
+-- ESP Folder
 local espFolder = Instance.new("Folder")
 espFolder.Name = "NoSleepESP"
 espFolder.Parent = player:WaitForChild("PlayerGui")
@@ -22,7 +23,7 @@ espFolder.Parent = player:WaitForChild("PlayerGui")
 -- =========================
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("NoSleepGUI") or Instance.new("ScreenGui")
 gui.Name = "NoSleepGUI"
-gui.ResetOnSpawn = false  -- Keeps GUI after respawn
+gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
@@ -174,7 +175,15 @@ UserInputService.JumpRequest:Connect(function()
     if infJumpEnabled then
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            local humanoid = char.Humanoid
+            local workspaceJumpAnim = workspace:FindFirstChild("jumpanim") or workspace:FindFirstChild("jump")
+            if workspaceJumpAnim then
+                local animTrack = humanoid:LoadAnimation(workspaceJumpAnim)
+                animTrack:Play()
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            else
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
         end
     end
 end)
