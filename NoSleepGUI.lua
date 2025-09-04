@@ -169,21 +169,14 @@ spawn(function()
 end)
 
 -- =========================
--- SAFE INFINITE JUMP
+-- SAFE INFINITE JUMP (NO DEATH)
 -- =========================
 UserInputService.JumpRequest:Connect(function()
     if infJumpEnabled then
         local char = player.Character
-        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            local humanoid = char.Humanoid
-            local workspaceJumpAnim = workspace:FindFirstChild("jumpanim") or workspace:FindFirstChild("jump")
-            if workspaceJumpAnim then
-                local animTrack = humanoid:LoadAnimation(workspaceJumpAnim)
-                animTrack:Play()
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            else
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
+        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+            -- Teleport slightly upward instead of forcing jump state
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(0,50,0)
         end
     end
 end)
