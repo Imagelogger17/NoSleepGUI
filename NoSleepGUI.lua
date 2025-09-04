@@ -1,13 +1,12 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Speed (max 48), Rainbow Platform Jump, Player ESP, Brainrot ESP (value & cost), Base Timer ESP
+-- Features: Rainbow GUI, Movable, Speed (max 48), Platform Movement, Player ESP, Brainrot ESP, Base Timer ESP
 -- =========================
 
 local MAX_SPEED = 48
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local desiredSpeed = 16
 local speedEnabled = true
@@ -94,11 +93,11 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.Text = "Player ESP: "..(playerESPEnabled and "ON" or "OFF")
 end)
 
--- Platform Toggle (replaces jump)
+-- Platform Toggle
 local platformBtn = Instance.new("TextButton")
 platformBtn.Size = UDim2.new(1,-20,0,30)
 platformBtn.Position = UDim2.new(0,10,0,130)
-platformBtn.Text = "Platform Jump: OFF"
+platformBtn.Text = "Platform: OFF"
 platformBtn.TextColor3 = Color3.fromRGB(255,255,255)
 platformBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 platformBtn.Font = Enum.Font.SourceSansBold
@@ -106,7 +105,7 @@ platformBtn.TextSize = 16
 platformBtn.Parent = frame
 platformBtn.MouseButton1Click:Connect(function()
     platformEnabled = not platformEnabled
-    platformBtn.Text = "Platform Jump: "..(platformEnabled and "ON" or "OFF")
+    platformBtn.Text = "Platform: "..(platformEnabled and "ON" or "OFF")
 end)
 
 -- Slider input
@@ -144,30 +143,34 @@ spawn(function()
 end)
 
 -- =========================
--- PLATFORM JUMP
+-- PLATFORM MOVEMENT
 -- =========================
 local platformPart
-local currentLevel = 0
-local levelHeight = 5
-
-UserInputService.JumpRequest:Connect(function()
-    if platformEnabled then
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
-            if not platformPart then
-                platformPart = Instance.new("Part")
-                platformPart.Anchored = true
-                platformPart.CanCollide = true
-                platformPart.Size = Vector3.new(6,1,6)
-                platformPart.Material = Enum.Material.Neon
-                platformPart.Color = Color3.fromHSV(math.random(),1,1)
+spawn(function()
+    while true do
+        if platformEnabled then
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                if not platformPart then
+                    platformPart = Instance.new("Part")
+                    platformPart.Size = Vector3.new(6,0.5,6)
+                    platformPart.Anchored = true
+                    platformPart.CanCollide = true
+                    platformPart.Material = Enum.Material.Neon
+                    platformPart.Color = Color3.fromHSV(math.random(),1,1)
+                    platformPart.Parent = workspace
+                end
                 platformPart.Position = char.HumanoidRootPart.Position - Vector3.new(0,3,0)
-                platformPart.Parent = workspace
+                platformPart.Color = Color3.fromHSV(tick()%1,1,1)
+            elseif platformPart then
+                platformPart:Destroy()
+                platformPart = nil
             end
-            currentLevel = currentLevel + 1
-            platformPart.Position = char.HumanoidRootPart.Position + Vector3.new(0, currentLevel*levelHeight, 0)
-            platformPart.Color = Color3.fromHSV(math.random(),1,1)
+        elseif platformPart then
+            platformPart:Destroy()
+            platformPart = nil
         end
+        wait(0.03)
     end
 end)
 
@@ -180,7 +183,7 @@ local function createESPForPlayer(targetPlayer)
     local hrp = targetPlayer.Character.HumanoidRootPart
 
     local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,200,0,60)
+    billboard.Size = UDim2.new(0,200,0,50)
     billboard.Adornee = hrp
     billboard.AlwaysOnTop = true
     billboard.Parent = espFolder
@@ -212,64 +215,13 @@ game.Players.PlayerAdded:Connect(function(p)
 end)
 
 -- =========================
--- BRAINROT ESP (Highest Value & Cost)
--- =========================
-local brainrotFolders = {"IgnoreBrainrots", "Brainrot God", "Brainrots", "BrainrotName"}
-
-local function createESPForBrainrot(br)
-    if not br:IsA("Model") and not br:IsA("BasePart") then return end
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,200,0,50)
-    billboard.Adornee = br.PrimaryPart or br
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(0,255,0)
-    label.TextStrokeTransparency = 0
-    label.TextScaled = true
-    label.Parent = billboard
-
-    local function updateText()
-        if br:FindFirstChild("Value") and br:FindFirstChild("Cost") then
-            label.Text = br.Name.." | Value: "..br.Value.Value.." | Cost: "..br.Cost.Value
-        else
-            label.Text = br.Name
-        end
-    end
-
-    RunService.RenderStepped:Connect(function()
-        if br.Parent then
-            updateText()
-            billboard.Adornee = br.PrimaryPart or br
-        else
-            billboard:Destroy()
-        end
-    end)
-end
-
-for _, folderName in pairs(brainrotFolders) do
-    local folder = workspace:FindFirstChild(folderName)
-    if folder then
-        for _, br in pairs(folder:GetChildren()) do
-            createESPForBrainrot(br)
-        end
-        folder.ChildAdded:Connect(function(child)
-            createESPForBrainrot(child)
-        end)
-    end
-end
-
--- =========================
--- BASE TIMER ESP
+-- TIMER ESP
 -- =========================
 local timerFolder = workspace:FindFirstChild("TimerGui")
 if timerFolder and timerFolder:FindFirstChild("Timer") then
     local timerObj = timerFolder.Timer
     local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,200,0,50)
+    billboard.Size = UDim2.new(0,150,0,30)
     billboard.Adornee = timerObj
     billboard.AlwaysOnTop = true
     billboard.Parent = espFolder
@@ -285,10 +237,64 @@ if timerFolder and timerFolder:FindFirstChild("Timer") then
 
     RunService.RenderStepped:Connect(function()
         if timerObj.Parent then
-            label.Text = "Base Timer: "..math.floor(timerObj.Value)
             billboard.Adornee = timerObj
         else
             billboard:Destroy()
         end
     end)
 end
+
+-- =========================
+-- HIGHEST VALUE BRAINROT ESP
+-- =========================
+local brainrotFolders = {"IgnoreBrainrots","Brainrot God","Brainrots","BrainrotName"}
+local highestBrainrotESP
+
+local function getHighestValueBrainrot()
+    local highestValue = -math.huge
+    local topBrainrot = nil
+    for _, folderName in pairs(brainrotFolders) do
+        local folder = workspace:FindFirstChild(folderName)
+        if folder then
+            for _, br in pairs(folder:GetChildren()) do
+                if br:IsA("BasePart") then
+                    local cost = br:FindFirstChild("Price") and br.Price.Value or 0
+                    if cost > highestValue then
+                        highestValue = cost
+                        topBrainrot = br
+                    end
+                end
+            end
+        end
+    end
+    return topBrainrot, highestValue
+end
+
+spawn(function()
+    while true do
+        local br, value = getHighestValueBrainrot()
+        if br and br.Parent then
+            if not highestBrainrotESP then
+                highestBrainrotESP = Instance.new("BillboardGui")
+                highestBrainrotESP.Size = UDim2.new(0,250,0,50)
+                highestBrainrotESP.AlwaysOnTop = true
+                highestBrainrotESP.Parent = espFolder
+
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1,0,1,0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(0,255,0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Name = "Label"
+                label.Parent = highestBrainrotESP
+            end
+            highestBrainrotESP.Adornee = br
+            highestBrainrotESP.Label.Text = br.Name.." | Cost: "..value
+        elseif highestBrainrotESP then
+            highestBrainrotESP:Destroy()
+            highestBrainrotESP = nil
+        end
+        wait(0.2)
+    end
+end)
