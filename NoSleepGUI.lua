@@ -1,6 +1,6 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Speed (max 48), Smooth Safe Inf Jump, Player ESP, Brainrot ESP, Base Timer ESP, Persistent GUI
+-- Features: Rainbow GUI, Movable, Speed (max 48), Ceiling-Safe Inf Jump, Player ESP, Brainrot ESP, Base Timer ESP, Persistent GUI
 -- =========================
 
 local MAX_SPEED = 48
@@ -143,14 +143,26 @@ spawn(function()
 end)
 
 -- =========================
--- NATURAL SAFE INFINITE JUMP
+-- CEILING-SAFE NATURAL INFINITE JUMP
 -- =========================
 UserInputService.JumpRequest:Connect(function()
     if infJumpEnabled then
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
             local humanoid = char.Humanoid
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                -- Raycast upwards to check for ceiling
+                local ray = Ray.new(root.Position, Vector3.new(0,3,0))
+                local hitPart, hitPos = workspace:FindPartOnRay(ray, char)
+                if hitPart then
+                    -- Touch ceiling -> die
+                    humanoid.Health = 0
+                else
+                    -- Safe jump
+                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end
         end
     end
 end)
