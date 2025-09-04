@@ -1,6 +1,6 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Speed (max 48), Ceiling-Safe Platform Jump, Player ESP, Brainrot ESP, Base Timer ESP, Persistent GUI
+-- Features: Rainbow GUI, Movable, Speed (max 48), Platform Follow, Player ESP, Brainrot ESP (Highest Value), Base Timer ESP, Persistent GUI
 -- =========================
 
 local MAX_SPEED = 48
@@ -78,9 +78,7 @@ speedLabel.TextColor3 = Color3.fromRGB(255,255,255)
 speedLabel.Text = "Speed: "..desiredSpeed
 speedLabel.Parent = frame
 
--- =========================
--- PLAYER ESP Toggle
--- =========================
+-- Player ESP Toggle
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(1,-20,0,30)
 toggleBtn.Position = UDim2.new(0,10,0,90)
@@ -95,27 +93,22 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.Text = "Player ESP: "..(playerESPEnabled and "ON" or "OFF")
 end)
 
--- =========================
--- PLATFORM BUTTON
--- =========================
+-- Platform Toggle
 local platformBtn = Instance.new("TextButton")
 platformBtn.Size = UDim2.new(1,-20,0,30)
 platformBtn.Position = UDim2.new(0,10,0,130)
-platformBtn.Text = "Platform: OFF"
+platformBtn.Text = "Rainbow Platform: OFF"
 platformBtn.TextColor3 = Color3.fromRGB(255,255,255)
 platformBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 platformBtn.Font = Enum.Font.SourceSansBold
 platformBtn.TextSize = 16
 platformBtn.Parent = frame
-
 platformBtn.MouseButton1Click:Connect(function()
     platformEnabled = not platformEnabled
-    platformBtn.Text = "Platform: "..(platformEnabled and "ON" or "OFF")
+    platformBtn.Text = "Rainbow Platform: "..(platformEnabled and "ON" or "OFF")
 end)
 
--- =========================
 -- Slider input
--- =========================
 sliderFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         local function updateSpeed(posX)
@@ -150,39 +143,22 @@ spawn(function()
 end)
 
 -- =========================
--- PLATFORM MOVEMENT
+-- RAINBOW PLATFORM FOLLOW
 -- =========================
-local platform
-RunService.RenderStepped:Connect(function()
-    if platformEnabled then
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            if not platform then
-                platform = Instance.new("Part")
-                platform.Size = Vector3.new(6,0.5,6)
-                platform.Anchored = true
-                platform.CanCollide = true
-                platform.Material = Enum.Material.Neon
-                platform.Color = Color3.fromHSV(math.random(),1,1)
-                platform.Parent = workspace
-            end
-            platform.Position = char.HumanoidRootPart.Position - Vector3.new(0,char.HumanoidRootPart.Size.Y/2 + 1,0)
-        end
-    else
-        if platform then
-            platform:Destroy()
-            platform = nil
-        end
-    end
-end)
+local platform = Instance.new("Part")
+platform.Size = Vector3.new(6,0.5,6)
+platform.Anchored = true
+platform.CanCollide = true
+platform.Material = Enum.Material.Neon
+platform.Parent = workspace
+local hue = 0
 
-UserInputService.JumpRequest:Connect(function()
-    if platformEnabled then
-        local char = player.Character
-        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            local humanoid = char.Humanoid
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+RunService.RenderStepped:Connect(function()
+    if platformEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = player.Character.HumanoidRootPart
+        platform.Position = hrp.Position - Vector3.new(0,3,0)
+        platform.Color = Color3.fromHSV(hue,1,1)
+        hue = (hue + 0.005) % 1
     end
 end)
 
@@ -195,7 +171,7 @@ local function createESPForPlayer(targetPlayer)
     local hrp = targetPlayer.Character.HumanoidRootPart
 
     local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,200,0,60) -- bigger names
+    billboard.Size = UDim2.new(0,200,0,50)
     billboard.Adornee = hrp
     billboard.AlwaysOnTop = true
     billboard.Parent = espFolder
@@ -227,14 +203,14 @@ game.Players.PlayerAdded:Connect(function(p)
 end)
 
 -- =========================
--- BRAINROT ESP
+-- BRAINROT ESP (Highest Value)
 -- =========================
-local brainrotFolders = {"IgnoreBrainrots", "Brainrot God", "Brainrots", "BrainrotName"}
+local brainrotFolders = {"IgnoreBrainrots","Brainrot God","Brainrots","BrainrotName"}
 
 local function createESPForBrainrot(br)
     if not br:IsA("BasePart") then return end
     local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,100,0,30)
+    billboard.Size = UDim2.new(0,150,0,50)
     billboard.Adornee = br
     billboard.AlwaysOnTop = true
     billboard.Parent = espFolder
@@ -245,7 +221,7 @@ local function createESPForBrainrot(br)
     label.TextColor3 = Color3.fromRGB(0,255,0)
     label.TextStrokeTransparency = 0
     label.TextScaled = true
-    label.Text = br.Name
+    label.Text = br.Name.. " | $"..(br:FindFirstChild("Value") and br.Value.Value or 0)
     label.Parent = billboard
 
     RunService.RenderStepped:Connect(function()
@@ -276,7 +252,7 @@ local timerFolder = workspace:FindFirstChild("TimerGui")
 if timerFolder and timerFolder:FindFirstChild("Timer") then
     local timerObj = timerFolder.Timer
     local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,100,0,30)
+    billboard.Size = UDim2.new(0,150,0,40)
     billboard.Adornee = timerObj
     billboard.AlwaysOnTop = true
     billboard.Parent = espFolder
@@ -287,7 +263,7 @@ if timerFolder and timerFolder:FindFirstChild("Timer") then
     label.TextColor3 = Color3.fromRGB(255,255,0)
     label.TextStrokeTransparency = 0
     label.TextScaled = true
-    label.Text = "Base Timer"
+    label.Text = "Base Timer: "..timerObj.Value
     label.Parent = billboard
 
     RunService.RenderStepped:Connect(function()
