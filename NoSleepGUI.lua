@@ -1,6 +1,6 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Close/Reopen, Speed (max 48), Smooth Safe Inf Jump, Player ESP, Persistent GUI
+-- Features: Rainbow GUI, Movable, Close/Reopen, Speed (max 48), Natural Safe Inf Jump, Player ESP, Persistent GUI
 -- =========================
 
 local MAX_SPEED = 48
@@ -12,7 +12,6 @@ local desiredSpeed = 16
 local speedEnabled = true
 local playerESPEnabled = true
 local infJumpEnabled = false
-local jumpVelocity = 50 -- upward velocity for smooth jumps
 
 -- ESP Folder
 local espFolder = Instance.new("Folder")
@@ -170,15 +169,15 @@ spawn(function()
 end)
 
 -- =========================
--- SMOOTH SAFE INFINITE JUMP
+-- NATURAL SAFE INFINITE JUMP
 -- =========================
 UserInputService.JumpRequest:Connect(function()
     if infJumpEnabled then
         local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            local root = char.HumanoidRootPart
-            -- Apply upward velocity for smooth natural jump
-            root.Velocity = Vector3.new(root.Velocity.X, jumpVelocity, root.Velocity.Z)
+        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+            local humanoid = char.Humanoid
+            -- Trigger jump naturally (works like normal jump, safe for double jump)
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 end)
