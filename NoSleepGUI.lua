@@ -1,6 +1,6 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Resizable, Speed, Platform, Go Through Bases, Player ESP, Brainrot ESP, Timer ESP
+-- Features: Rainbow GUI, Speed, Platform, Go Through Bases, Player ESP, Brainrot ESP, Timer ESP
 -- =========================
 
 local MAX_SPEED = 48
@@ -40,33 +40,6 @@ frame.Draggable = true
 frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
 frame.BorderSizePixel = 2
 frame.Parent = gui
-
--- Resize handle
-local resize = Instance.new("Frame")
-resize.Size = UDim2.new(0,20,0,20)
-resize.Position = UDim2.new(1,-20,1,-20)
-resize.BackgroundColor3 = Color3.fromRGB(255,255,255)
-resize.BorderSizePixel = 1
-resize.Parent = frame
-resize.Cursor = "SizeNWSE"
-
-resize.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        local mouse = player:GetMouse()
-        local startPos = Vector2.new(mouse.X, mouse.Y)
-        local startSize = frame.Size
-        local conn
-        conn = RunService.RenderStepped:Connect(function()
-            local delta = Vector2.new(mouse.X, mouse.Y) - startPos
-            frame.Size = UDim2.new(0, math.max(300, startSize.X.Offset + delta.X), 0, math.max(200, startSize.Y.Offset + delta.Y))
-        end)
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                conn:Disconnect()
-            end
-        end)
-    end
-end)
 
 -- Rainbow effect
 spawn(function()
