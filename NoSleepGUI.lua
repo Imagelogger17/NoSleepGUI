@@ -1,6 +1,6 @@
 -- =========================
 -- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Close/Reopen, Speed (max 48), Natural Safe Inf Jump, Player ESP, Persistent GUI
+-- Features: Rainbow GUI, Movable, Speed (max 48), Smooth Safe Inf Jump, Player ESP, Brainrot ESP, Base Timer ESP, Persistent GUI
 -- =========================
 
 local MAX_SPEED = 48
@@ -56,35 +56,9 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
 title.Parent = frame
 
--- Close button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0,50,0,30)
-closeBtn.Position = UDim2.new(1,-55,0,0)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 18
-closeBtn.Parent = frame
-closeBtn.MouseButton1Click:Connect(function()
-    gui.Enabled = false
-end)
-
--- Reopen button
-local reopenBtn = Instance.new("TextButton")
-reopenBtn.Size = UDim2.new(0,140,0,30)
-reopenBtn.Position = UDim2.new(0,20,0,250)
-reopenBtn.Text = "Open No Sleep GUI"
-reopenBtn.TextColor3 = Color3.fromRGB(255,255,255)
-reopenBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
-reopenBtn.Font = Enum.Font.SourceSansBold
-reopenBtn.TextSize = 16
-reopenBtn.Parent = gui
-reopenBtn.MouseButton1Click:Connect(function()
-    gui.Enabled = true
-end)
-
--- Speed slider
+-- =========================
+-- SPEED SLIDER
+-- =========================
 local sliderFrame = Instance.new("Frame")
 sliderFrame.Size = UDim2.new(1,-20,0,40)
 sliderFrame.Position = UDim2.new(0,10,0,40)
@@ -176,7 +150,6 @@ UserInputService.JumpRequest:Connect(function()
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
             local humanoid = char.Humanoid
-            -- Trigger jump naturally (works like normal jump, safe for double jump)
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
@@ -214,12 +187,83 @@ local function createESPForPlayer(targetPlayer)
     end)
 end
 
--- ESP for existing players
 for _, p in pairs(game.Players:GetPlayers()) do
     createESPForPlayer(p)
 end
 
--- ESP for new players
 game.Players.PlayerAdded:Connect(function(p)
     createESPForPlayer(p)
 end)
+
+-- =========================
+-- BRAINROT ESP
+-- =========================
+local brainrotFolders = {"IgnoreBrainrots", "Brainrot God", "Brainrots", "BrainrotName"}
+
+local function createESPForBrainrot(br)
+    if not br:IsA("BasePart") then return end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0,100,0,30)
+    billboard.Adornee = br
+    billboard.AlwaysOnTop = true
+    billboard.Parent = espFolder
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(0,255,0)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Text = br.Name
+    label.Parent = billboard
+
+    RunService.RenderStepped:Connect(function()
+        if br.Parent then
+            billboard.Adornee = br
+        else
+            billboard:Destroy()
+        end
+    end)
+end
+
+for _, folderName in pairs(brainrotFolders) do
+    local folder = workspace:FindFirstChild(folderName)
+    if folder then
+        for _, br in pairs(folder:GetChildren()) do
+            createESPForBrainrot(br)
+        end
+        folder.ChildAdded:Connect(function(child)
+            createESPForBrainrot(child)
+        end)
+    end
+end
+
+-- =========================
+-- BASE TIMER ESP
+-- =========================
+local timerFolder = workspace:FindFirstChild("TimerGui")
+if timerFolder and timerFolder:FindFirstChild("Timer") then
+    local timerObj = timerFolder.Timer
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0,100,0,30)
+    billboard.Adornee = timerObj
+    billboard.AlwaysOnTop = true
+    billboard.Parent = espFolder
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255,255,0)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Text = "Base Timer"
+    label.Parent = billboard
+
+    RunService.RenderStepped:Connect(function()
+        if timerObj.Parent then
+            billboard.Adornee = timerObj
+        else
+            billboard:Destroy()
+        end
+    end)
+end
