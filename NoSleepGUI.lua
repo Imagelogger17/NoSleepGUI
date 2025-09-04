@@ -1,120 +1,165 @@
 -- =========================
--- No Sleep GUI Obfuscated
+-- No Sleep GUI for Steal A Brainrot
+-- Features: Rainbow GUI, Movable, Speed (max 48), Platform Jump, Player ESP, Brainrot ESP, Base Timer ESP, Persistent GUI
 -- =========================
 
-local a=48
-local b=game.Players.LocalPlayer
-local c=game:GetService("RunService")
-local d=game:GetService("UserInputService")
-local e=game:GetService("PhysicsService")
+local MAX_SPEED, UserInputService, RunService = 48, game:GetService("UserInputService"), game:GetService("RunService")
+local player = game.Players.LocalPlayer
 
-local f=16
-local g=true
-local h=true
-local i=false
+local desiredSpeed, speedEnabled, playerESPEnabled, jumpEnabled = 16, true, true, false
+local currentJumpLevel, jumpHeight = 0, 10
 
-local j=Vector3.new(6,1,6)
-local k=6
-local l=10
-local m=0
+-- ESP Folder
+local espFolder = Instance.new("Folder")
+espFolder.Name = "NoSleepESP"
+espFolder.Parent = player:WaitForChild("PlayerGui")
 
-local n=Instance.new("Folder")
-n.Name="NoSleepESP"
-n.Parent=b:WaitForChild("PlayerGui")
+-- GUI Creation
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("NoSleepGUI") or Instance.new("ScreenGui")
+gui.Name = "NoSleepGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
-local o=b:WaitForChild("PlayerGui"):FindFirstChild("NoSleepGUI") or Instance.new("ScreenGui")
-o.Name="NoSleepGUI"
-o.ResetOnSpawn=false
-o.Parent=b:WaitForChild("PlayerGui")
+local frame = Instance.new("Frame")
+frame.Size, frame.Position, frame.Active, frame.Draggable = UDim2.new(0,300,0,220), UDim2.new(0,20,0,20), true, true
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Parent = gui
 
-local p=Instance.new("Frame")
-p.Size=UDim2.new(0,300,0,220)
-p.Position=UDim2.new(0,20,0,20)
-p.Active=true
-p.Draggable=true
-p.BackgroundColor3=Color3.fromRGB(30,30,30)
-p.Parent=o
-
+-- Rainbow GUI
 spawn(function()
- local q=0
- while true do
-  p.BackgroundColor3=Color3.fromHSV(q,1,1)
-  q=q+0.005
-  if q>1 then q=0 end
-  wait(0.03)
- end
-end)
-
-local r=Instance.new("TextLabel")
-r.Size=UDim2.new(1,0,0,30)
-r.Position=UDim2.new(0,0,0,0)
-r.Text="No Sleep GUI"
-r.TextColor3=Color3.fromRGB(255,255,255)
-r.BackgroundTransparency=1
-r.Font=Enum.Font.SourceSansBold
-r.TextSize=18
-r.Parent=p
-
-local s=Instance.new("Frame")
-s.Size=UDim2.new(1,-20,0,40)
-s.Position=UDim2.new(0,10,0,40)
-s.BackgroundColor3=Color3.fromRGB(50,50,50)
-s.Parent=p
-
-local t=Instance.new("Frame")
-t.Size=UDim2.new(f/a,0,1,0)
-t.BackgroundColor3=Color3.fromRGB(0,170,255)
-t.Parent=s
-
-local u=Instance.new("TextLabel")
-u.Size=UDim2.new(1,0,0,20)
-u.Position=UDim2.new(0,0,1,0)
-u.BackgroundTransparency=1
-u.TextColor3=Color3.fromRGB(255,255,255)
-u.Text="Speed: "..f
-u.Parent=p
-
--- SPEED CONTROL
-spawn(function()
- while true do
-  if g then
-   local v=b.Character
-   if v and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
-    local w=v.HumanoidRootPart
-    local x=v.Humanoid
-    local y=x.MoveDirection
-    if y.Magnitude>0 then
-     w.Velocity=y*f+Vector3.new(0,w.Velocity.Y,0)
+    local hue = 0
+    while true do
+        frame.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+        hue = (hue + 0.005) % 1
+        wait(0.03)
     end
-   end
-  end
-  wait(0.03)
- end
 end)
 
--- MULTI-LEVEL JUMP
-local function z(A)
- local B=Instance.new("Part")
- B.Size=j
- B.Position=A
- B.Anchored=true
- B.CanCollide=true
- B.Transparency=0.5
- B.CastShadow=false
- B.Parent=workspace
- pcall(function() e:SetPartCollisionGroup(B,"NoCollision") end)
- game:GetService("Debris"):AddItem(B,l)
+-- Title
+local title = Instance.new("TextLabel")
+title.Size, title.Position, title.Text, title.TextColor3, title.BackgroundTransparency, title.Font, title.TextSize = UDim2.new(1,0,0,30), UDim2.new(0,0,0,0), "No Sleep GUI", Color3.fromRGB(255,255,255), 1, Enum.Font.SourceSansBold, 18
+title.Parent = frame
+
+-- Speed Slider
+local sliderFrame = Instance.new("Frame")
+sliderFrame.Size, sliderFrame.Position, sliderFrame.BackgroundColor3 = UDim2.new(1,-20,0,40), UDim2.new(0,10,0,40), Color3.fromRGB(50,50,50)
+sliderFrame.Parent = frame
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(desiredSpeed/MAX_SPEED,0,1,0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(0,170,255)
+sliderFill.Parent = sliderFrame
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size, speedLabel.Position, speedLabel.BackgroundTransparency, speedLabel.TextColor3, speedLabel.Text = UDim2.new(1,0,0,20), UDim2.new(0,0,1,0), 1, Color3.fromRGB(255,255,255), "Speed: "..desiredSpeed
+speedLabel.Parent = frame
+
+-- Player ESP Toggle
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size, toggleBtn.Position, toggleBtn.Text, toggleBtn.TextColor3, toggleBtn.BackgroundColor3, toggleBtn.Font, toggleBtn.TextSize = UDim2.new(1,-20,0,30), UDim2.new(0,10,0,90), "Player ESP: ON", Color3.fromRGB(255,255,255), Color3.fromRGB(70,70,70), Enum.Font.SourceSansBold, 16
+toggleBtn.Parent = frame
+toggleBtn.MouseButton1Click:Connect(function()
+    playerESPEnabled = not playerESPEnabled
+    toggleBtn.Text = "Player ESP: "..(playerESPEnabled and "ON" or "OFF")
+end)
+
+-- Jump Toggle
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Size, jumpBtn.Position, jumpBtn.Text, jumpBtn.TextColor3, jumpBtn.BackgroundColor3, jumpBtn.Font, jumpBtn.TextSize = UDim2.new(1,-20,0,30), UDim2.new(0,10,0,130), "Platform Jump: OFF", Color3.fromRGB(255,255,255), Color3.fromRGB(70,70,70), Enum.Font.SourceSansBold, 16
+jumpBtn.Parent = frame
+jumpBtn.MouseButton1Click:Connect(function()
+    jumpEnabled = not jumpEnabled
+    jumpBtn.Text = "Platform Jump: "..(jumpEnabled and "ON" or "OFF")
+end)
+
+-- Slider Input
+sliderFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local function updateSpeed(posX)
+            local relativeX = math.clamp(posX - sliderFrame.AbsolutePosition.X,0,sliderFrame.AbsoluteSize.X)
+            local ratio = relativeX / sliderFrame.AbsoluteSize.X
+            desiredSpeed = math.floor(ratio*MAX_SPEED)
+            sliderFill.Size = UDim2.new(ratio,0,1,0)
+            speedLabel.Text = "Speed: "..desiredSpeed
+        end
+        updateSpeed(input.Position.X)
+    end
+end)
+
+-- Speed Control
+spawn(function()
+    while true do
+        if speedEnabled then
+            local c = player.Character
+            if c and c:FindFirstChild("HumanoidRootPart") and c:FindFirstChild("Humanoid") then
+                local root, humanoid = c.HumanoidRootPart, c.Humanoid
+                local moveDir = humanoid.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    root.Velocity = moveDir*desiredSpeed + Vector3.new(0,root.Velocity.Y,0)
+                end
+            end
+        end
+        wait(0.03)
+    end
+end)
+
+-- Platform Jump
+UserInputService.JumpRequest:Connect(function()
+    if jumpEnabled then
+        local c = player.Character
+        if c and c:FindFirstChild("Humanoid") and c.Humanoid.Health>0 then
+            local root = c:FindFirstChild("HumanoidRootPart")
+            if root then
+                currentJumpLevel = currentJumpLevel + 1
+                root.CFrame = root.CFrame + Vector3.new(0,jumpHeight,0)
+            end
+        end
+    end
+end)
+
+-- Player ESP
+local function espPlayer(p)
+    if p==player or not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
+    local b = Instance.new("BillboardGui")
+    b.Size, b.Adornee, b.AlwaysOnTop, b.Parent = UDim2.new(0,100,0,50), p.Character.HumanoidRootPart, true, espFolder
+    local l = Instance.new("TextLabel")
+    l.Size, l.BackgroundTransparency, l.TextColor3, l.TextStrokeTransparency, l.TextScaled, l.Text, l.Parent = UDim2.new(1,0,1,0),1,Color3.fromRGB(255,0,0),0,true,p.Name,b
+    RunService.RenderStepped:Connect(function()
+        if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then b.Adornee = p.Character.HumanoidRootPart else b:Destroy() end
+    end)
+end
+for _,p in pairs(game.Players:GetPlayers()) do espPlayer(p) end
+game.Players.PlayerAdded:Connect(espPlayer)
+
+-- Brainrot ESP
+local brFolders={"IgnoreBrainrots","Brainrot God","Brainrots","BrainrotName"}
+local function espBrainrot(br)
+    if not br:IsA("BasePart") then return end
+    local b = Instance.new("BillboardGui")
+    b.Size, b.Adornee, b.AlwaysOnTop, b.Parent = UDim2.new(0,100,0,30), br, true, espFolder
+    local l = Instance.new("TextLabel")
+    l.Size, l.BackgroundTransparency, l.TextColor3, l.TextStrokeTransparency, l.TextScaled, l.Text, l.Parent = UDim2.new(1,0,1,0),1,Color3.fromRGB(0,255,0),0,true,br.Name,b
+    RunService.RenderStepped:Connect(function()
+        if br.Parent then b.Adornee = br else b:Destroy() end
+    end)
+end
+for _,fName in pairs(brFolders) do
+    local f = workspace:FindFirstChild(fName)
+    if f then
+        for _,br in pairs(f:GetChildren()) do espBrainrot(br) end
+        f.ChildAdded:Connect(espBrainrot)
+    end
 end
 
-d.JumpRequest:Connect(function()
- if i then
-  local C=b.Character
-  if C and C:FindFirstChild("Humanoid") and C.Humanoid.Health>0 then
-   local D=C.HumanoidRootPart
-   local pos=D.Position+Vector3.new(0,k*m,0)
-   z(pos)
-   C.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-   m=m+1
-  end
- end
-end)
+-- Base Timer ESP
+local timerFolder = workspace:FindFirstChild("TimerGui")
+if timerFolder and timerFolder:FindFirstChild("Timer") then
+    local timerObj = timerFolder.Timer
+    local b = Instance.new("BillboardGui")
+    b.Size, b.Adornee, b.AlwaysOnTop, b.Parent = UDim2.new(0,100,0,30), timerObj, true, espFolder
+    local l = Instance.new("TextLabel")
+    l.Size, l.BackgroundTransparency, l.TextColor3, l.TextStrokeTransparency, l.TextScaled, l.Text, l.Parent = UDim2.new(1,0,1,0),1,Color3.fromRGB(255,255,0),0,true,"Base Timer",b
+    RunService.RenderStepped:Connect(function()
+        if timerObj.Parent then b.Adornee = timerObj else b:Destroy() end
+    end)
+end
