@@ -1,6 +1,6 @@
 -- =========================
--- No Sleep GUI for Steal A Brainrot
--- Features: Rainbow GUI, Movable, Speed (max 48), Platform, Ceiling-Safe Inf Jump, Player ESP, Brainrot ESP (highest value), Base Timer ESP, Persistent GUI
+-- NoSleepGUI + Platform + ESP Fix
+-- Features: Rainbow GUI, Movable, Speed (max 48), Platform, Inf Jump, Player ESP, Brainrot ESP (Highest Value), Timer ESP
 -- =========================
 
 local MAX_SPEED = 48
@@ -11,13 +11,10 @@ local UserInputService = game:GetService("UserInputService")
 local desiredSpeed = 16
 local speedEnabled = true
 local playerESPEnabled = true
-local infJumpEnabled = false
+local brainrotESPEnabled = true
+local timerESPEnabled = true
 local platformEnabled = false
-
--- ESP Folder
-local espFolder = Instance.new("Folder")
-espFolder.Name = "NoSleepESP"
-espFolder.Parent = player:WaitForChild("PlayerGui")
+local infJumpEnabled = false
 
 -- =========================
 -- GUI CREATION
@@ -28,7 +25,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 300)
+frame.Size = UDim2.new(0, 300, 0, 250)
 frame.Position = UDim2.new(0, 20, 0, 20)
 frame.Active = true
 frame.Draggable = true
@@ -46,7 +43,6 @@ spawn(function()
     end
 end)
 
--- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,30)
 title.Position = UDim2.new(0,0,0,0)
@@ -79,49 +75,56 @@ speedLabel.TextColor3 = Color3.fromRGB(255,255,255)
 speedLabel.Text = "Speed: "..desiredSpeed
 speedLabel.Parent = frame
 
--- Player ESP Toggle
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(1,-20,0,30)
-toggleBtn.Position = UDim2.new(0,10,0,90)
-toggleBtn.Text = "Player ESP: ON"
-toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 16
-toggleBtn.Parent = frame
-toggleBtn.MouseButton1Click:Connect(function()
-    playerESPEnabled = not playerESPEnabled
-    toggleBtn.Text = "Player ESP: "..(playerESPEnabled and "ON" or "OFF")
-end)
+-- =========================
+-- BUTTONS
+-- =========================
+local function createButton(y, text, toggleVar)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,-20,0,30)
+    btn.Position = UDim2.new(0,10,0,y)
+    btn.Text = text..": OFF"
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
+    btn.Parent = frame
+    btn.MouseButton1Click:Connect(function()
+        toggleVar.Value = not toggleVar.Value
+        btn.Text = text..": "..(toggleVar.Value and "ON" or "OFF")
+    end)
+    return btn
+end
 
--- Infinite Jump Toggle
-local infJumpBtn = Instance.new("TextButton")
-infJumpBtn.Size = UDim2.new(1,-20,0,30)
-infJumpBtn.Position = UDim2.new(0,10,0,130)
-infJumpBtn.Text = "Infinite Jump: OFF"
-infJumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
-infJumpBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-infJumpBtn.Font = Enum.Font.SourceSansBold
-infJumpBtn.TextSize = 16
-infJumpBtn.Parent = frame
-infJumpBtn.MouseButton1Click:Connect(function()
-    infJumpEnabled = not infJumpEnabled
-    infJumpBtn.Text = "Infinite Jump: "..(infJumpEnabled and "ON" or "OFF")
-end)
+local espToggle = {Value = playerESPEnabled}
+local brainrotToggle = {Value = brainrotESPEnabled}
+local timerToggle = {Value = timerESPEnabled}
+local infJumpToggle = {Value = infJumpEnabled}
+local platformToggle = {Value = platformEnabled}
 
--- Platform Toggle
-local platformBtn = Instance.new("TextButton")
-platformBtn.Size = UDim2.new(1,-20,0,30)
-platformBtn.Position = UDim2.new(0,10,0,170)
-platformBtn.Text = "Platform: OFF"
-platformBtn.TextColor3 = Color3.fromRGB(255,255,255)
-platformBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-platformBtn.Font = Enum.Font.SourceSansBold
-platformBtn.TextSize = 16
-platformBtn.Parent = frame
-platformBtn.MouseButton1Click:Connect(function()
-    platformEnabled = not platformEnabled
-    platformBtn.Text = "Platform: "..(platformEnabled and "ON" or "OFF")
+createButton(90,"Player ESP",espToggle)
+createButton(130,"Brainrot ESP",brainrotToggle)
+createButton(170,"Timer ESP",timerToggle)
+createButton(210,"Infinite Jump",infJumpToggle)
+createButton(250,"Platform",platformToggle)
+
+-- =========================
+-- SPEED CONTROL
+-- =========================
+spawn(function()
+    while true do
+        if speedEnabled then
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+                local root = char.HumanoidRootPart
+                local humanoid = char.Humanoid
+                local moveDir = humanoid.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    root.Velocity = moveDir*desiredSpeed + Vector3.new(0,root.Velocity.Y,0)
+                end
+            end
+        end
+        wait(0.03)
+    end
 end)
 
 -- Slider input
@@ -139,199 +142,148 @@ sliderFrame.InputBegan:Connect(function(input)
 end)
 
 -- =========================
--- SPEED CONTROL
+-- PLATFORM SYSTEM
 -- =========================
 spawn(function()
+    local currentHeight = 5
     while true do
-        if speedEnabled then
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") then
-                local root = character.HumanoidRootPart
-                local humanoid = character.Humanoid
-                local moveDirection = humanoid.MoveDirection
-                if moveDirection.Magnitude > 0 then
-                    root.Velocity = moveDirection*desiredSpeed + Vector3.new(0,root.Velocity.Y,0)
-                end
-            end
-        end
-        wait(0.03)
-    end
-end)
-
--- =========================
--- CEILING-SAFE NATURAL INFINITE JUMP
--- =========================
-UserInputService.JumpRequest:Connect(function()
-    if infJumpEnabled then
-        local char = player.Character
-        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            local humanoid = char.Humanoid
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then
-                -- Raycast upwards to check for ceiling
-                local ray = Ray.new(root.Position, Vector3.new(0,3,0))
-                local hitPart, hitPos = workspace:FindPartOnRay(ray, char)
-                if hitPart then
-                    -- Touch ceiling -> die
-                    humanoid.Health = 0
-                else
-                    -- Safe jump
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
-            end
-        end
-    end
-end)
-
--- =========================
--- PLATFORM MOVEMENT
--- =========================
-local platformPart
-spawn(function()
-    while true do
-        if platformEnabled then
+        if platformToggle.Value then
             local char = player.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
-                if not platformPart then
-                    platformPart = Instance.new("Part")
-                    platformPart.Size = Vector3.new(6,1,6)
-                    platformPart.Anchored = true
-                    platformPart.CanCollide = true
-                    platformPart.Material = Enum.Material.Neon
-                    platformPart.Color = Color3.fromHSV(math.random(),1,1)
-                    platformPart.Parent = workspace
-                end
-                local hrp = char.HumanoidRootPart
-                platformPart.Position = hrp.Position - Vector3.new(0,3,0)
-            elseif platformPart then
-                platformPart:Destroy()
-                platformPart = nil
+                char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position.X,currentHeight,char.HumanoidRootPart.Position.Z)
+                currentHeight = currentHeight + 5
+                wait(0.3)
             end
         else
-            if platformPart then
-                platformPart:Destroy()
-                platformPart = nil
-            end
+            currentHeight = 5
         end
         wait(0.03)
     end
 end)
+
+-- =========================
+-- INFINITE JUMP
+-- =========================
+UserInputService.JumpRequest:Connect(function()
+    if infJumpToggle.Value then
+        local char = player.Character
+        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- =========================
+-- ESP FOLDERS
+-- =========================
+local espFolder = Instance.new("Folder")
+espFolder.Name = "NoSleepESP"
+espFolder.Parent = player:WaitForChild("PlayerGui")
 
 -- =========================
 -- PLAYER ESP
 -- =========================
-local function createESPForPlayer(targetPlayer)
-    if targetPlayer == player then return end
-    if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = targetPlayer.Character.HumanoidRootPart
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,200,0,50)
-    billboard.Adornee = hrp
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(255,0,0)
-    label.TextStrokeTransparency = 0
-    label.TextScaled = true
-    label.Text = targetPlayer.Name
-    label.Parent = billboard
-
-    RunService.RenderStepped:Connect(function()
-        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            billboard.Adornee = targetPlayer.Character.HumanoidRootPart
-        else
-            billboard:Destroy()
+local function updatePlayerESP()
+    while true do
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and espToggle.Value and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                local billboard = espFolder:FindFirstChild(p.Name) or Instance.new("BillboardGui")
+                billboard.Name = p.Name
+                billboard.Size = UDim2.new(0,150,0,60)
+                billboard.Adornee = hrp
+                billboard.AlwaysOnTop = true
+                billboard.Parent = espFolder
+                local label = billboard:FindFirstChild("Label") or Instance.new("TextLabel")
+                label.Name = "Label"
+                label.Size = UDim2.new(1,0,1,0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(255,0,0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Text = p.Name
+                label.Parent = billboard
+            end
         end
-    end)
-end
-
-for _, p in pairs(game.Players:GetPlayers()) do
-    createESPForPlayer(p)
-end
-
-game.Players.PlayerAdded:Connect(function(p)
-    createESPForPlayer(p)
-end)
-
--- =========================
--- BRAINROT ESP (HIGHEST VALUE + COST)
--- =========================
-local function createESPForBrainrot(br)
-    if not br:IsA("BasePart") then return end
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,150,0,40)
-    billboard.Adornee = br
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(0,255,0)
-    label.TextStrokeTransparency = 0
-    label.TextScaled = true
-    label.Text = br.Name.." $"..(br:FindFirstChild("Value") and br.Value.Value or "0")
-    label.Parent = billboard
-
-    RunService.RenderStepped:Connect(function()
-        if br.Parent then
-            billboard.Adornee = br
-        else
-            billboard:Destroy()
-        end
-    end)
-end
-
-workspace.ChildAdded:Connect(function(child)
-    if child.Name == "Brainrots" then
-        for _, br in pairs(child:GetChildren()) do
-            createESPForBrainrot(br)
-        end
-        child.ChildAdded:Connect(function(br)
-            createESPForBrainrot(br)
-        end)
+        wait(0.1)
     end
-end)
+end
+spawn(updatePlayerESP)
 
 -- =========================
--- BASE TIMER ESP
+-- BRAINROT ESP (Highest Value)
 -- =========================
-local function createTimerESP(timerObj)
-    if not timerObj:IsA("BasePart") then return end
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0,120,0,30)
-    billboard.Adornee = timerObj
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(255,255,0)
-    label.TextStrokeTransparency = 0
-    label.TextScaled = true
-    label.Text = "Base Timer: "..(timerObj:FindFirstChild("Time") and timerObj.Time.Value or "0")
-    label.Parent = billboard
-
-    RunService.RenderStepped:Connect(function()
-        if timerObj.Parent then
-            label.Text = "Base Timer: "..(timerObj:FindFirstChild("Time") and timerObj.Time.Value or "0")
-        else
-            billboard:Destroy()
+local brainrotFolders = {"IgnoreBrainrots","Brainrot God","Brainrots","BrainrotName"}
+local function updateBrainrotESP()
+    while true do
+        if brainrotToggle.Value then
+            local highestValue = nil
+            local highestPart = nil
+            for _, folderName in pairs(brainrotFolders) do
+                local folder = workspace:FindFirstChild(folderName)
+                if folder then
+                    for _, br in pairs(folder:GetChildren()) do
+                        local val = br:FindFirstChild("Value")
+                        if val and (not highestValue or val.Value > highestValue) then
+                            highestValue = val.Value
+                            highestPart = br
+                        end
+                    end
+                end
+            end
+            -- Update ESP
+            for _, obj in pairs(espFolder:GetChildren()) do
+                if obj:IsA("BillboardGui") and obj.Name:match("Brainrot") then obj:Destroy() end
+            end
+            if highestPart then
+                local billboard = Instance.new("BillboardGui")
+                billboard.Name = "BrainrotESP"
+                billboard.Size = UDim2.new(0,120,0,40)
+                billboard.Adornee = highestPart
+                billboard.AlwaysOnTop = true
+                billboard.Parent = espFolder
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1,0,1,0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(0,255,0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Text = highestPart.Name.." $"..highestValue
+                label.Parent = billboard
+            end
         end
-    end)
-end
-
-local timerFolder = workspace:FindFirstChild("TimerGui")
-if timerFolder then
-    for _, t in pairs(timerFolder:GetChildren()) do
-        createTimerESP(t)
+        wait(0.3)
     end
-    timerFolder.ChildAdded:Connect(function(child)
-        createTimerESP(child)
-    end)
 end
+spawn(updateBrainrotESP)
+
+-- =========================
+-- TIMER ESP
+-- =========================
+local function updateTimerESP()
+    while true do
+        if timerToggle.Value then
+            local timerFolder = workspace:FindFirstChild("TimerGui")
+            local timerObj = timerFolder and timerFolder:FindFirstChild("Timer")
+            if timerObj then
+                local billboard = espFolder:FindFirstChild("TimerESP") or Instance.new("BillboardGui")
+                billboard.Name = "TimerESP"
+                billboard.Size = UDim2.new(0,120,0,40)
+                billboard.Adornee = timerObj
+                billboard.AlwaysOnTop = true
+                billboard.Parent = espFolder
+                local label = billboard:FindFirstChild("Label") or Instance.new("TextLabel")
+                label.Name = "Label"
+                label.Size = UDim2.new(1,0,1,0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(255,255,0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Text = "Base Timer: "..tostring(timerObj.Value or 0)
+                label.Parent = billboard
+            end
+        end
+        wait(0.3)
+    end
+end
+spawn(updateTimerESP)
