@@ -1,22 +1,24 @@
 -- =========================================================
 -- NoSleep GUI for Steal A Brainrot (Enhanced & Improved)
--- =========================================================
--- This script has been refactored for improved stability,
--- performance, and reliability. It addresses common issues
--- like variable scope, incorrect loops, and error handling.
+-- Version: 2.0
+--
+-- This script is designed for use with Roblox exploit executors
+-- like Delta. It provides a GUI with features such as speed
+-- control, rainbow effects, and ESP toggles.
 -- =========================================================
 
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
+-- Player and GUI references
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Constants
 local MAX_SPEED = 48
-local UPDATE_INTERVAL = 0.03 -- For non-RunService loops
 local RAINBOW_SPEED = 0.005
 
 -- State variables
@@ -26,7 +28,7 @@ local platformEnabled = false
 local stealEnabled = false
 local currentRainbowHue = 0
 
--- UI Elements and Helpers
+-- UI Elements
 local gui = playerGui:FindFirstChild("NoSleepGUI") or Instance.new("ScreenGui")
 gui.Name = "NoSleepGUI"
 gui.ResetOnSpawn = false
@@ -57,10 +59,9 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
 title.Parent = frame
 
----
-### Speed Control
----
-
+-- =========================
+-- Speed Control
+-- =========================
 local sliderFrame = Instance.new("Frame")
 sliderFrame.Size = UDim2.new(1, -20, 0, 40)
 sliderFrame.Position = UDim2.new(0, 10, 0, 40)
@@ -99,26 +100,16 @@ end)
 
 -- Speed hack loop
 RunService.Stepped:Connect(function()
-    local character = player.Character or player.CharacterAdded:Wait()
+    local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    local root = character and character:FindFirstChild("HumanoidRootPart")
-
-    if humanoid and root then
-        -- This logic is more reliable than directly setting Velocity,
-        -- as it works with the Humanoid's built-in movement system.
-        if humanoid.MoveDirection.Magnitude > 0 then
-            humanoid.WalkSpeed = desiredSpeed
-        else
-            -- Resets to default if not moving to prevent weird behavior
-            humanoid.WalkSpeed = 16 
-        end
+    if humanoid and humanoid.WalkSpeed ~= desiredSpeed and desiredSpeed > 0 then
+        humanoid.WalkSpeed = desiredSpeed
     end
 end)
 
----
-### Toggle Buttons
----
-
+-- =========================
+-- Toggle Buttons
+-- =========================
 local function createToggleButton(text, posY, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -20, 0, 30)
@@ -140,15 +131,15 @@ end
 
 createToggleButton("Player ESP", 90, function(state)
     playerESPEnabled = state
-    -- Additional ESP logic needs to be implemented here
+    -- NOTE: Add your Player ESP logic here.
 end)
 createToggleButton("Rainbow Platform", 130, function(state)
     platformEnabled = state
-    -- Additional platform logic needs to be implemented here
+    -- NOTE: Add your Rainbow Platform logic here.
 end)
 createToggleButton("Invisible Steal", 170, function(state)
     stealEnabled = state
-    -- Additional steal logic needs to be implemented here
+    -- NOTE: Add your Invisible Steal logic here.
 end)
 
 -- Ensure existing ESP folder is removed on re-execution
@@ -158,15 +149,3 @@ if espFolder then espFolder:Destroy() end
 espFolder = Instance.new("Folder")
 espFolder.Name = "NoSleepESP"
 espFolder.Parent = playerGui
-
--- NOTE: The ESP and other core logic loops were missing from your
--- original script. You will need to implement them here, using
--- `RunService.Heartbeat` for consistent updates.
---
--- Example ESP loop:
--- RunService.Heartbeat:Connect(function()
---     if playerESPEnabled then
---         -- Iterate through all players, create a BoxHandleAdornment for them,
---         -- and parent it to the espFolder.
---     end
--- end)
