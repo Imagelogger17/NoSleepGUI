@@ -1,4 +1,4 @@
--- Long-obfuscated NoSleep GUI for Delta Executor (Speed Fixed)
+-- Long-obfuscated NoSleep GUI for Delta Executor (Fully Fixed)
 local a=48
 local b=game.Players.LocalPlayer
 local c=game:GetService("RunService")
@@ -8,7 +8,7 @@ local e=game:GetService("Workspace")
 -- Default variables
 local f=16 -- current speed value
 local MAX_SPEED=100
-local SPEED_MULTIPLIER=5 -- makes slider feel faster
+local SPEED_MULTIPLIER=5 -- multiplies slider value for proper speed
 local g=true -- Player ESP toggle
 local h=true -- Rainbow Platform toggle
 local i=false -- Body Aura toggle
@@ -139,7 +139,7 @@ end
 t("Player ESP",90,function(B) h=B end)
 t("Rainbow Platform",130,function(B) i=B end)
 
--- ================= Grapple Movement =================
+-- ================= Grapple Movement (Fully Fixed) =================
 spawn(function()
     while true do
         local char=b.Character
@@ -152,10 +152,9 @@ spawn(function()
                 end
                 if char:FindFirstChildOfClass("Tool")==grapple then
                     local direction=grapple.Handle.Position-hrp.Position
-                    local distance=direction.Magnitude
-                    if distance>0 then
-                        -- Fixed speed: multiply slider by SPEED_MULTIPLIER
-                        local velocity=direction.Unit*math.min(distance*2,f*SPEED_MULTIPLIER)
+                    if direction.Magnitude>0 then
+                        -- Full speed based on slider + multiplier, no distance clamp
+                        local velocity=direction.Unit*f*SPEED_MULTIPLIER
                         hrp.Velocity=Vector3.new(velocity.X,hrp.Velocity.Y,velocity.Z)
                     end
                 end
