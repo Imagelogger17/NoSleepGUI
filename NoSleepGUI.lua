@@ -1,77 +1,68 @@
--- Load Rayfield GUI
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
-
--- Services
+-- ================= Delta GUI NoSleep =================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
-
 local LocalPlayer = Players.LocalPlayer
 
--- Variables
+-- ================= Variables =================
 local MAX_SPEED = 60
 local rainbowPlatformEnabled = true
 local playerESPEnabled = true
 local brainrotESPEnabled = true
 local timerESPEnabled = true
 
--- GUI
-local Window = Rayfield:CreateWindow({
-    Name = "NoSleep GUI",
-    LoadingTitle = "Loading NoSleep...",
-    LoadingSubtitle = "by YourName",
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = "NoSleep",
-       FileName = "Config"
-    }
-})
+-- ================= GUI =================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NoSleepGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- ================= TABS =================
-local MainTab = Window:CreateTab("Main")
-local VisualsTab = Window:CreateTab("Visuals")
+local function createWindow(title)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 350, 0, 300)
+    frame.Position = UDim2.new(0, 20, 0, 20)
+    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    frame.Active = true
+    frame.Draggable = true
+    frame.Parent = ScreenGui
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,0,30)
+    label.Position = UDim2.new(0,0,0,0)
+    label.Text = title
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 18
+    label.Parent = frame
+
+    return frame
+end
+
+local MainTab = createWindow("Main")
+local VisualsTab = createWindow("Visuals")
 
 -- ================= MAIN TAB =================
-MainTab:CreateLabel({
-    Name = "Speed: "..MAX_SPEED
-})
+local function createToggle(parent, text, default, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 150, 0, 30)
+    btn.Position = UDim2.new(0,10,0,40)
+    btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
+    btn.Text = text..": "..(default and "ON" or "OFF")
+    btn.Parent = parent
 
-MainTab:CreateToggle({
-    Name = "Rainbow Platform",
-    CurrentValue = true,
-    Flag = "RainbowPlatform",
-    Callback = function(val)
-        rainbowPlatformEnabled = val
-    end
-})
+    local state = default
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = text..": "..(state and "ON" or "OFF")
+        callback(state)
+    end)
+end
 
--- ================= VISUALS TAB =================
-VisualsTab:CreateToggle({
-    Name = "Player ESP",
-    CurrentValue = true,
-    Flag = "PlayerESP",
-    Callback = function(val)
-        playerESPEnabled = val
-    end
-})
-
-VisualsTab:CreateToggle({
-    Name = "Best Brainrot ESP",
-    CurrentValue = true,
-    Flag = "BrainrotESP",
-    Callback = function(val)
-        brainrotESPEnabled = val
-    end
-})
-
-VisualsTab:CreateToggle({
-    Name = "Timer ESP",
-    CurrentValue = true,
-    Flag = "TimerESP",
-    Callback = function(val)
-        timerESPEnabled = val
-    end
-})
+createToggle(MainTab, "Rainbow Platform", true, function(val) rainbowPlatformEnabled = val end)
 
 -- ================= FIXED SPEED =================
 spawn(function()
@@ -84,19 +75,17 @@ spawn(function()
     end
 end)
 
--- ================= ESP FOLDER =================
+-- ================= ESP =================
 local ESPFolder = Instance.new("Folder")
 ESPFolder.Name = "NoSleepESP"
 ESPFolder.Parent = Workspace
 
--- Rainbow hue tracker
 local hue = 0
 RunService.RenderStepped:Connect(function()
     hue = hue + 0.005
     if hue > 1 then hue = 0 end
 end)
 
--- ================= CREATE ESP FUNCTION =================
 local function createESP(player, isBrainrot)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
     local hrp = player.Character.HumanoidRootPart
@@ -104,13 +93,7 @@ local function createESP(player, isBrainrot)
     bill.AlwaysOnTop = true
     bill.Adornee = hrp
     bill.Parent = ESPFolder
-
-    -- Bigger size for brainrot
-    if isBrainrot then
-        bill.Size = UDim2.new(0,250,0,80)
-    else
-        bill.Size = UDim2.new(0,150,0,50)
-    end
+    bill.Size = isBrainrot and UDim2.new(0,250,0,80) or UDim2.new(0,150,0,50)
     bill.Name = player.Name
 
     local label = Instance.new("TextLabel")
@@ -119,12 +102,11 @@ local function createESP(player, isBrainrot)
     label.TextScaled = true
     label.TextStrokeTransparency = 0
     label.Text = player.Name
-    label.Parent = bill
-
     if isBrainrot then
         label.Font = Enum.Font.Antique
         label.TextSize = 28
     end
+    label.Parent = bill
 
     local conn
     conn = RunService.RenderStepped:Connect(function()
@@ -144,15 +126,11 @@ local function createESP(player, isBrainrot)
 end
 
 -- Add normal players
-for _,p in pairs(Players:GetPlayers()) do
-    createESP(p, false)
-end
-Players.PlayerAdded:Connect(function(p)
-    createESP(p, false)
-end)
+for _,p in pairs(Players:GetPlayers()) do createESP(p,false) end
+Players.PlayerAdded:Connect(function(p) createESP(p,false) end)
 
 -- ================= BEST BRAINROT ESP WITH NEON =================
-local function updateBestBrainrot()
+spawn(function()
     while true do
         if brainrotESPEnabled then
             local bestValue = 0
@@ -186,11 +164,11 @@ local function updateBestBrainrot()
             -- Create ESP for best Brainrot
             if bestObj then
                 local dummyPlayer = {Name = bestObj.Name, Character = {HumanoidRootPart = bestObj}}
-                createESP(dummyPlayer, true)
+                createESP(dummyPlayer,true)
                 local bill = ESPFolder:FindFirstChild(bestObj.Name)
                 if bill then bill.Name = "BrainrotESP" end
 
-                -- Neon Glow Outline
+                -- Neon Glow
                 local selectionBox = Instance.new("SelectionBox")
                 selectionBox.Adornee = bestObj
                 selectionBox.Name = "BrainrotGlow"
@@ -199,7 +177,6 @@ local function updateBestBrainrot()
                 selectionBox.SurfaceTransparency = 1
                 selectionBox.Parent = bestObj
 
-                -- Update neon color rainbow
                 RunService.RenderStepped:Connect(function()
                     if selectionBox and brainrotESPEnabled then
                         selectionBox.Color3 = Color3.fromHSV(hue,1,1)
@@ -212,8 +189,7 @@ local function updateBestBrainrot()
         end
         wait(1)
     end
-end
-spawn(updateBestBrainrot)
+end)
 
 -- ================= TIMER ESP =================
 spawn(function()
@@ -238,7 +214,6 @@ spawn(function()
                     label.Text = "Base Timer"
                     label.Parent = bb
 
-                    -- Rainbow glow
                     RunService.RenderStepped:Connect(function()
                         if label and timerESPEnabled then
                             label.TextColor3 = Color3.fromHSV(hue,1,1)
