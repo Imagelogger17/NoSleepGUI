@@ -1,4 +1,4 @@
--- 🌈 NoSleep Rainbow GUI for Delta (Speed + ESP + Brainrot + Timer + Platform)
+-- 🌈 NoSleep GUI for Delta (Speed + Brainrot ESP + Timer ESP)
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -16,7 +16,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 360)
+frame.Size = UDim2.new(0, 300, 0, 300)
 frame.Position = UDim2.new(0, 20, 0, 20)
 frame.Active = true
 frame.Draggable = true
@@ -46,8 +46,6 @@ title.Parent = frame
 -- Variables
 local speed = 16
 local minSpeed, maxSpeed = 16, 60
-local playerESP = true
-local platformESP = false
 local brainrotESP = true
 local timerESP = true
 local hue = 0
@@ -117,10 +115,8 @@ local function makeButton(name, y, callback, state)
     return btn
 end
 
-makeButton("Player ESP", 100, function(v) playerESP = v end, true)
-makeButton("Platform ESP", 140, function(v) platformESP = v end, false)
-makeButton("Brainrot ESP", 180, function(v) brainrotESP = v end, true)
-makeButton("Timer ESP", 220, function(v) timerESP = v end, true)
+makeButton("Brainrot ESP", 100, function(v) brainrotESP = v end, true)
+makeButton("Timer ESP", 140, function(v) timerESP = v end, true)
 
 -- Speed loop
 task.spawn(function()
@@ -130,47 +126,6 @@ task.spawn(function()
             char.Humanoid.WalkSpeed = speed
         end
         task.wait(0.1)
-    end
-end)
-
--- 🌈 Player ESP
-task.spawn(function()
-    while true do
-        if playerESP then
-            for _, plr in pairs(game.Players:GetPlayers()) do
-                if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    if not ESPFolder:FindFirstChild(plr.Name) then
-                        local bb = Instance.new("BillboardGui")
-                        bb.Adornee = plr.Character.HumanoidRootPart
-                        bb.Size = UDim2.new(0, 200, 0, 50)
-                        bb.AlwaysOnTop = true
-                        bb.Name = plr.Name
-                        bb.Parent = ESPFolder
-
-                        local label = Instance.new("TextLabel")
-                        label.Size = UDim2.new(1, 0, 1, 0)
-                        label.BackgroundTransparency = 1
-                        label.Text = plr.Name
-                        label.TextScaled = true
-                        label.Font = Enum.Font.SourceSansBold
-                        label.Parent = bb
-
-                        RunService.RenderStepped:Connect(function()
-                            if bb and bb.Parent then
-                                label.TextColor3 = Color3.fromHSV(hue, 1, 1)
-                            end
-                        end)
-                    end
-                end
-            end
-        else
-            for _, v in pairs(ESPFolder:GetChildren()) do
-                if game.Players:FindFirstChild(v.Name) then
-                    v:Destroy()
-                end
-            end
-        end
-        task.wait(1)
     end
 end)
 
