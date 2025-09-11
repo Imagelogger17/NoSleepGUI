@@ -1,4 +1,4 @@
--- 🌈 NoSleep GUI for Delta (Speed + Brainrot ESP + Timer ESP)
+-- 🌈 NoSleep GUI for Delta (Speed + Combined ESP)
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -16,7 +16,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 300)
+frame.Size = UDim2.new(0, 300, 0, 250)
 frame.Position = UDim2.new(0, 20, 0, 20)
 frame.Active = true
 frame.Draggable = true
@@ -46,8 +46,7 @@ title.Parent = frame
 -- Variables
 local speed = 16
 local minSpeed, maxSpeed = 16, 60
-local brainrotESP = true
-local timerESP = true
+local ESPEnabled = true
 local hue = 0
 
 -- 🌈 Speed Slider
@@ -96,29 +95,25 @@ sliderFrame.InputBegan:Connect(function(input)
     end
 end)
 
--- Toggle Buttons
-local function makeButton(name, y, callback, state)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 30)
-    btn.Position = UDim2.new(0, 10, 0, y)
-    btn.Text = name .. ": " .. (state and "ON" or "OFF")
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 16
-    btn.Parent = frame
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.Text = name .. ": " .. (state and "ON" or "OFF")
-        callback(state)
-    end)
-    return btn
-end
+-- 🌈 ESP toggle
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(1, -20, 0, 30)
+espButton.Position = UDim2.new(0, 10, 0, 100)
+espButton.Text = "ESP: ON"
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+espButton.Font = Enum.Font.SourceSansBold
+espButton.TextSize = 16
+espButton.Parent = frame
+espButton.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    espButton.Text = "ESP: " .. (ESPEnabled and "ON" or "OFF")
+    if not ESPEnabled then
+        for _, v in pairs(ESPFolder:GetChildren()) do v:Destroy() end
+    end
+end)
 
-makeButton("Brainrot ESP", 100, function(v) brainrotESP = v end, true)
-makeButton("Timer ESP", 140, function(v) timerESP = v end, true)
-
--- Speed loop
+-- 🌈 Speed loop
 task.spawn(function()
     while true do
         local char = player.Character
@@ -129,24 +124,25 @@ task.spawn(function()
     end
 end)
 
--- 🌈 Brainrot ESP
+-- 🌈 Brainrot + Timer ESP combined
 task.spawn(function()
     while true do
-        if brainrotESP then
-            local best = nil
+        if ESPEnabled then
+            -- Brainrot ESP
+            local bestBrainrot = nil
             for _, obj in pairs(Workspace:GetChildren()) do
                 if obj.Name:lower():find("brainrot") then
-                    if not best or (obj:FindFirstChild("Value") and obj.Value > (best.Value or 0)) then
-                        best = obj
+                    if not bestBrainrot or (obj:FindFirstChild("Value") and obj.Value > (bestBrainrot.Value or 0)) then
+                        bestBrainrot = obj
                     end
                 end
             end
-            local old = ESPFolder:FindFirstChild("BrainrotESP")
-            if old then old:Destroy() end
-            if best and best:IsA("BasePart") then
+            local oldBrainrot = ESPFolder:FindFirstChild("BrainrotESP")
+            if oldBrainrot then oldBrainrot:Destroy() end
+            if bestBrainrot and bestBrainrot:IsA("BasePart") then
                 local bb = Instance.new("BillboardGui")
-                bb.Adornee = best
-                bb.Size = UDim2.new(0, 200, 0, 60)
+                bb.Adornee = bestBrainrot
+                bb.Size = UDim2.new(0, 200, 0, 50)
                 bb.AlwaysOnTop = true
                 bb.Name = "BrainrotESP"
                 bb.Parent = ESPFolder
@@ -161,31 +157,21 @@ task.spawn(function()
                 label.Parent = bb
 
                 RunService.RenderStepped:Connect(function()
-                    if bb and best then
+                    if bb and bestBrainrot then
                         label.TextColor3 = Color3.fromHSV(hue, 1, 1)
                     end
                 end)
             end
-        else
-            local old = ESPFolder:FindFirstChild("BrainrotESP")
-            if old then old:Destroy() end
-        end
-        task.wait(1)
-    end
-end)
 
--- 🌈 Timer ESP
-task.spawn(function()
-    while true do
-        if timerESP then
+            -- Timer ESP
             local base = Workspace:FindFirstChild("Base")
             local timer = base and base:FindFirstChild("Timer")
-            local old = ESPFolder:FindFirstChild("TimerESP")
-            if old then old:Destroy() end
+            local oldTimer = ESPFolder:FindFirstChild("TimerESP")
+            if oldTimer then oldTimer:Destroy() end
             if base and timer then
                 local bb = Instance.new("BillboardGui")
                 bb.Adornee = base
-                bb.Size = UDim2.new(0, 200, 0, 60)
+                bb.Size = UDim2.new(0, 200, 0, 50)
                 bb.AlwaysOnTop = true
                 bb.Name = "TimerESP"
                 bb.Parent = ESPFolder
@@ -199,9 +185,9 @@ task.spawn(function()
                 label.Parent = bb
 
                 RunService.RenderStepped:Connect(function()
-                    if timerESP and bb and base and timer then
+                    if timer and bb then
                         if timer:IsA("IntValue") or timer:IsA("NumberValue") then
-                            label.Text = "⏳ Laser Timer: " .. tostring(timer.Value)
+                            label.Text = "⏳ Laser Timer: " .. timer.Value
                         elseif timer:IsA("StringValue") then
                             label.Text = "⏳ Laser Timer: " .. timer.Value
                         else
@@ -212,8 +198,8 @@ task.spawn(function()
                 end)
             end
         else
-            local old = ESPFolder:FindFirstChild("TimerESP")
-            if old then old:Destroy() end
+            -- Destroy ESPs if disabled
+            for _, v in pairs(ESPFolder:GetChildren()) do v:Destroy() end
         end
         task.wait(1)
     end
