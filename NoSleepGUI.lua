@@ -1,10 +1,10 @@
--- 🌈 NoSleep GUI for Delta (Speed + Brainrot/Timer ESP + Platform)
+-- 🌈 NoSleep GUI for Delta (OP Speed + ESP + Platform)
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 
--- ESP Folder
+-- ESP & Platform Folder
 local ESPFolder = Instance.new("Folder")
 ESPFolder.Name = "NoSleepESP"
 ESPFolder.Parent = player:WaitForChild("PlayerGui")
@@ -16,14 +16,14 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,300,0,350)
-frame.Position = UDim2.new(0,20,0,20)
+frame.Size = UDim2.new(0, 300, 0, 400)
+frame.Position = UDim2.new(0, 20, 0, 20)
 frame.Active = true
 frame.Draggable = true
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Parent = gui
 
--- Rainbow GUI background
+-- Rainbow background
 task.spawn(function()
     local hue = 0
     while true do
@@ -49,6 +49,7 @@ local speed = 16
 local minSpeed, maxSpeed = 16, 60
 local brainrotESP = true
 local timerESP = true
+local platformEffect = true
 local hue = 0
 
 -- 🌈 Speed Slider
@@ -71,7 +72,6 @@ speedLabel.TextColor3 = Color3.fromRGB(255,255,255)
 speedLabel.Text = "Speed: "..speed
 speedLabel.Parent = frame
 
--- Slider input
 sliderFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         local moveConn, releaseConn
@@ -97,7 +97,7 @@ sliderFrame.InputBegan:Connect(function(input)
     end
 end)
 
--- 🌈 ESP Toggles
+-- 🌈 Buttons
 local function makeButton(name,y,callback,state)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1,-20,0,30)
@@ -118,15 +118,17 @@ end
 
 makeButton("Brainrot ESP",100,function(v) brainrotESP=v end,true)
 makeButton("Timer ESP",140,function(v) timerESP=v end,true)
+makeButton("Platform Effect",180,function(v) platformEffect=v end,true)
 
--- 🌈 Speed Loop
+-- 🌈 OP Speed Loop
 task.spawn(function()
     while true do
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.WalkSpeed = speed
+            char.Humanoid.JumpPower = 100 -- Make it OP jump
         end
-        task.wait(0.1)
+        task.wait(0.05)
     end
 end)
 
@@ -140,11 +142,15 @@ platformPart.Parent = Workspace
 task.spawn(function()
     local huePlatform = 0
     while true do
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            platformPart.Position = char.HumanoidRootPart.Position - Vector3.new(0,3,0)
-            platformPart.Color = Color3.fromHSV(huePlatform,1,1)
-            huePlatform = (huePlatform + 0.005) % 1
+        if platformEffect then
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                platformPart.Position = char.HumanoidRootPart.Position - Vector3.new(0,3,0)
+                platformPart.Color = Color3.fromHSV(huePlatform,1,1)
+                huePlatform = (huePlatform + 0.005) % 1
+            end
+        else
+            platformPart.Position = Vector3.new(0,9999,0) -- hide
         end
         task.wait(0.03)
     end
